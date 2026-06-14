@@ -13,6 +13,7 @@ const emojis = [
     "🍑","🥑","🍋","🍊","🍐","🥥","🌽","🍔"
 ];
 
+// STATE
 let flippedCards = [];
 let moves = 0;
 let matchedPairs = 0;
@@ -56,7 +57,7 @@ function shuffle(array) {
     return array;
 }
 
-/* BOARD */
+/* CREATE BOARD */
 function createBoard() {
 
     grid.innerHTML = "";
@@ -79,7 +80,7 @@ function createBoard() {
     loadHighscore();
 
     const pairs = (gridSize * gridSize) / 2;
-    const selected = emojis.slice(0, pairs);
+    const selected = shuffle([...emojis]).slice(0, pairs);
 
     let cards = shuffle([...selected, ...selected]);
 
@@ -102,6 +103,8 @@ function createBoard() {
         card.addEventListener("click", flipCard);
         grid.appendChild(card);
     });
+
+    winScreen.style.display = "none";
 }
 
 /* FLIP */
@@ -171,6 +174,8 @@ function endGame() {
 
     stopTimer();
 
+    lockBoard = true;
+
     document.querySelectorAll(".card")
         .forEach(c => c.classList.add("disabled"));
 
@@ -188,8 +193,29 @@ function endGame() {
     winScreen.style.display = "flex";
 }
 
+/* RESET (FIXED) */
+function resetGame() {
+
+    winScreen.style.display = "none";
+
+    flippedCards = [];
+    moves = 0;
+    matchedPairs = 0;
+    timer = 0;
+
+    gameStarted = false;
+    lockBoard = false;
+
+    stopTimer();
+
+    movesDisplay.textContent = "Moves: 0";
+    timerDisplay.textContent = "Time: 0s";
+
+    createBoard();
+}
+
 /* EVENTS */
-restartBtn.addEventListener("click", createBoard);
+restartBtn.addEventListener("click", resetGame);
 difficultySelect.addEventListener("change", createBoard);
 
 createBoard();
