@@ -5,6 +5,9 @@ const timerDisplay = document.getElementById("timer");
 const highscoreDisplay = document.getElementById("highscore");
 const difficultySelect = document.getElementById("difficulty");
 
+const winScreen = document.getElementById("winScreen");
+const finalStats = document.getElementById("finalStats");
+
 const emojis = [
     "🍎","🍌","🍇","🍓","🍍","🥝","🍒","🍉",
     "🍑","🥑","🍋","🍊","🍐","🥥","🌽","🍔"
@@ -16,20 +19,23 @@ let matchedPairs = 0;
 
 let timer = 0;
 let interval = null;
+
 let gameStarted = false;
+let lockBoard = false;
+
 let gridSize = 4;
 
+/* HIGH SCORE */
 function getHighscoreKey() {
     return `memory_highscore_${gridSize}`;
 }
 
 function loadHighscore() {
     const best = localStorage.getItem(getHighscoreKey());
-    highscoreDisplay.textContent = best
-        ? `Best: ${best}s`
-        : "Best: --";
+    highscoreDisplay.textContent = best ? `Best: ${best}s` : "Best: --";
 }
 
+/* TIMER */
 function startTimer() {
     interval = setInterval(() => {
         timer++;
@@ -41,6 +47,7 @@ function stopTimer() {
     clearInterval(interval);
 }
 
+/* SHUFFLE */
 function shuffle(array) {
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -49,6 +56,7 @@ function shuffle(array) {
     return array;
 }
 
+/* BOARD */
 function createBoard() {
 
     grid.innerHTML = "";
@@ -57,7 +65,9 @@ function createBoard() {
     moves = 0;
     matchedPairs = 0;
     timer = 0;
+
     gameStarted = false;
+    lockBoard = false;
 
     stopTimer();
 
@@ -73,7 +83,8 @@ function createBoard() {
 
     let cards = shuffle([...selected, ...selected]);
 
-    grid.style.gridTemplateColumns = `repeat(${gridSize}, 100px)`;
+    grid.style.gridTemplateColumns =
+        `repeat(${gridSize}, 6.25rem)`;
 
     cards.forEach(value => {
 
@@ -89,73 +100,95 @@ function createBoard() {
         `;
 
         card.addEventListener("click", flipCard);
-
         grid.appendChild(card);
     });
 }
 
+/* FLIP */
 function flipCard() {
+
+    if (lockBoard) return;
+
+    if (
+        this.classList.contains("flipped") ||
+        flippedCards.includes(this)
+    ) return;
 
     if (!gameStarted) {
         gameStarted = true;
         startTimer();
     }
 
-    if (
-        this.classList.contains("flipped") ||
-        flippedCards.length === 2
-    ) return;
-
     this.classList.add("flipped");
     flippedCards.push(this);
 
     if (flippedCards.length === 2) {
-
         moves++;
         movesDisplay.textContent = `Moves: ${moves}`;
 
+        lockBoard = true;
         checkMatch();
     }
 }
 
+/* MATCH */
 function checkMatch() {
 
-    const [card1, card2] = flippedCards;
+    const [c1, c2] = flippedCards;
 
-    if (card1.dataset.value === card2.dataset.value) {
+    const isMatch = c1.dataset.value === c2.dataset.value;
+
+    if (isMatch) {
+
+        c1.classList.add("matched");
+        c2.classList.add("matched");
+
+        flippedCards = [];
+        lockBoard = false;
 
         matchedPairs++;
-        flippedCards = [];
 
         if (matchedPairs === (gridSize * gridSize) / 2) {
-
-            stopTimer();
-
-            setTimeout(() => {
-
-                alert(`You won in ${moves} moves and ${timer}s!`);
-
-                const key = getHighscoreKey();
-                const best = localStorage.getItem(key);
-
-                if (!best || timer < best) {
-                    localStorage.setItem(key, timer);
-                    loadHighscore();
-                }
-
-            }, 300);
+            endGame();
         }
 
     } else {
 
         setTimeout(() => {
-            card1.classList.remove("flipped");
-            card2.classList.remove("flipped");
+
+            c1.classList.remove("flipped");
+            c2.classList.remove("flipped");
+
             flippedCards = [];
-        }, 800);
+            lockBoard = false;
+
+        }, 700);
     }
 }
 
+/* END GAME */
+function endGame() {
+
+    stopTimer();
+
+    document.querySelectorAll(".card")
+        .forEach(c => c.classList.add("disabled"));
+
+    const key = getHighscoreKey();
+    const best = localStorage.getItem(key);
+
+    if (!best || timer < best) {
+        localStorage.setItem(key, timer);
+        loadHighscore();
+    }
+
+    finalStats.textContent =
+        `Moves: ${moves} | Time: ${timer}s`;
+
+    winScreen.style.display = "flex";
+}
+
+/* EVENTS */
 restartBtn.addEventListener("click", createBoard);
 difficultySelect.addEventListener("change", createBoard);
 
