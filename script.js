@@ -26,7 +26,8 @@ let lockBoard = false;
 
 let gridSize = 4;
 
-/* HIGH SCORE */
+/* ---------------- HIGH SCORE ---------------- */
+
 function getHighscoreKey() {
     return `memory_highscore_${gridSize}`;
 }
@@ -36,7 +37,8 @@ function loadHighscore() {
     highscoreDisplay.textContent = best ? `Best: ${best}s` : "Best: --";
 }
 
-/* TIMER */
+/* ---------------- TIMER ---------------- */
+
 function startTimer() {
     interval = setInterval(() => {
         timer++;
@@ -48,7 +50,8 @@ function stopTimer() {
     clearInterval(interval);
 }
 
-/* SHUFFLE */
+/* ---------------- SHUFFLE ---------------- */
+
 function shuffle(array) {
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -57,8 +60,12 @@ function shuffle(array) {
     return array;
 }
 
-/* CREATE BOARD */
+/* ---------------- CREATE BOARD ---------------- */
+
 function createBoard() {
+
+    // always start clean
+    stopTimer();
 
     grid.innerHTML = "";
 
@@ -70,10 +77,10 @@ function createBoard() {
     gameStarted = false;
     lockBoard = false;
 
-    stopTimer();
-
     movesDisplay.textContent = "Moves: 0";
     timerDisplay.textContent = "Time: 0s";
+
+    winScreen.style.display = "none";
 
     gridSize = parseInt(difficultySelect.value);
 
@@ -103,11 +110,10 @@ function createBoard() {
         card.addEventListener("click", flipCard);
         grid.appendChild(card);
     });
-
-    winScreen.style.display = "none";
 }
 
-/* FLIP */
+/* ---------------- FLIP ---------------- */
+
 function flipCard() {
 
     if (lockBoard) return;
@@ -134,7 +140,8 @@ function flipCard() {
     }
 }
 
-/* MATCH */
+/* ---------------- MATCH CHECK ---------------- */
+
 function checkMatch() {
 
     const [c1, c2] = flippedCards;
@@ -169,15 +176,12 @@ function checkMatch() {
     }
 }
 
-/* END GAME */
+/* ---------------- END GAME ---------------- */
+
 function endGame() {
 
     stopTimer();
-
     lockBoard = true;
-
-    document.querySelectorAll(".card")
-        .forEach(c => c.classList.add("disabled"));
 
     const key = getHighscoreKey();
     const best = localStorage.getItem(key);
@@ -193,10 +197,13 @@ function endGame() {
     winScreen.style.display = "flex";
 }
 
-/* RESET (FIXED) */
+/* ---------------- RESET (FIXED) ---------------- */
+
 function resetGame() {
 
     winScreen.style.display = "none";
+
+    stopTimer();
 
     flippedCards = [];
     moves = 0;
@@ -206,15 +213,18 @@ function resetGame() {
     gameStarted = false;
     lockBoard = false;
 
-    stopTimer();
-
     movesDisplay.textContent = "Moves: 0";
     timerDisplay.textContent = "Time: 0s";
 
-    createBoard();
+    grid.innerHTML = "";
+
+    setTimeout(() => {
+        createBoard();
+    }, 50);
 }
 
-/* EVENTS */
+/* ---------------- EVENTS ---------------- */
+
 restartBtn.addEventListener("click", resetGame);
 difficultySelect.addEventListener("change", createBoard);
 
